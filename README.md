@@ -1,5 +1,13 @@
 # Kit Effets Spéciaux - Atelier Fond Vert
 
+![Écran d'accueil : choix du mode débutant ou expert, et autorisation d'utilisation de l'image](docs/captures/accueil.png)
+
+| Mode débutant : installation du plateau | Mode débutant : choix du décor |
+| --- | --- |
+| ![Onglet Installation, avec le plan vu de dessus et le matériel](docs/captures/debutant-installation.png) | ![Onglet Décor : la personne est incrustée dans un fond marin](docs/captures/debutant-decor.png) |
+| **Mode débutant : réglage du vert** | **Mode expert : histoire en 5 plans** |
+| ![Onglet Réglage du vert, avec le masque noir et blanc affiché](docs/captures/debutant-reglage.png) | ![Mode expert : décors Espace et storyboard en 5 plans](docs/captures/expert-histoire.png) |
+
 Appli d'incrustation sur fond vert en direct, conçue pour les ateliers numériques en bibliothèque. Les participants se voient dans un décor et repartent avec leur photo ou leur vidéo.
 
 - **Version en ligne**, sans installation : https://bibliogironde.github.io/kit-effets-speciaux/
