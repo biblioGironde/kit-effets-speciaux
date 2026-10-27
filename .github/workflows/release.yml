@@ -62,8 +62,17 @@ jobs:
 
       - run: npm ci
 
+      # Sur les machines macOS de GitHub, Spotlight indexe le disque .dmg pendant sa création
+      # et empêche de le démonter : on le désactive.
+      - name: Désactiver Spotlight (macOS)
+        if: runner.os == 'macOS'
+        run: sudo mdutil -a -i off
+
       - name: Construire l'application
-        run: npx electron-builder ${{ matrix.target }} --publish never
+        shell: bash
+        run: |
+          # Deuxième tentative en cas d'erreur passagère (disque .dmg encore occupé, téléchargement interrompu)
+          npx electron-builder ${{ matrix.target }} --publish never || { sleep 15; rm -rf dist; npx electron-builder ${{ matrix.target }} --publish never; }
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
