@@ -71,8 +71,16 @@ jobs:
       - name: Construire l'application
         shell: bash
         run: |
-          # Deuxième tentative en cas d'erreur passagère (disque .dmg encore occupé, téléchargement interrompu)
-          npx electron-builder ${{ matrix.target }} --publish never || { sleep 15; rm -rf dist; npx electron-builder ${{ matrix.target }} --publish never; }
+          # Une deuxième tentative en cas d'erreur passagère (disque .dmg encore occupé, téléchargement interrompu)
+          build() { npx electron-builder "$@" --publish never || { sleep 15; npx electron-builder "$@" --publish never; }; }
+          if [ "$RUNNER_OS" = "macOS" ]; then
+            # Les deux .dmg (Apple Silicon et Intel) portent le même nom de disque :
+            # construits en même temps, ils se bloquent l'un l'autre. On les construit l'un après l'autre.
+            build --mac --arm64
+            build --mac --x64
+          else
+            build ${{ matrix.target }}
+          fi
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
 
