@@ -1,0 +1,89 @@
+name: Release de l'application
+
+# Une release est créée à chaque tag de version (v1.0.0, v1.1.0…).
+# Elle contient l'appli pour macOS (Apple Silicon et Intel), Windows (installation et portable) et Linux (AppImage et tar.gz).
+on:
+  push:
+    tags:
+      - "v*"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build ${{ matrix.name }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-latest
+            name: macOS
+            target: --mac
+          - os: windows-latest
+            name: Windows
+            target: --win
+          - os: ubuntu-latest
+            name: Linux
+            target: --linux
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Construire l'application
+        run: npx electron-builder ${{ matrix.target }} --publish never
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-${{ matrix.name }}
+          path: |
+            dist/*.dmg
+            dist/*.exe
+            dist/*.AppImage
+            dist/*.tar.gz
+          if-no-files-found: error
+
+  release:
+    name: Publier la release
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.ref, 'refs/tags/')
+    steps:
+      - uses: actions/download-artifact@v4
+        with:
+          path: dist
+          merge-multiple: true
+
+      - uses: softprops/action-gh-release@v2
+        with:
+          name: Kit Effets Spéciaux ${{ github.ref_name }}
+          files: dist/*
+          body: |
+            ## Télécharger
+
+            | Système | Fichier |
+            | --- | --- |
+            | macOS, Mac récent (puce Apple M1 à M4) | `kit-effets-speciaux-…-mac-arm64.dmg` |
+            | macOS, Mac Intel | `kit-effets-speciaux-…-mac-x64.dmg` |
+            | Windows, installation | `kit-effets-speciaux-…-windows-installation.exe` |
+            | Windows, sans installation | `kit-effets-speciaux-…-windows-portable.exe` |
+            | Linux | `kit-effets-speciaux-…-linux-x86_64.AppImage` |
+
+            ## Premier lancement
+
+            L'application n'est pas signée.
+            - **macOS** : clic droit sur l'application, puis « Ouvrir », puis « Ouvrir » à nouveau. Autorisez ensuite la caméra.
+            - **Windows** : si SmartScreen s'affiche, cliquez sur « Informations complémentaires », puis « Exécuter quand même ».
+            - **Linux** : rendez le fichier AppImage exécutable (`chmod +x`), puis lancez-le.
+
+            Version en ligne, sans installation : https://bibliogironde.github.io/kit-effets-speciaux/

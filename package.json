@@ -1,0 +1,113 @@
+{
+  "name": "kit-effets-speciaux",
+  "productName": "Kit Effets Speciaux",
+  "version": "1.0.0",
+  "description": "Kit Effets Spéciaux - Atelier Fond Vert : incrustation sur fond vert en direct pour les ateliers en bibliothèque.",
+  "main": "electron/main.js",
+  "author": "biblio.gironde",
+  "homepage": "https://github.com/biblioGironde/kit-effets-speciaux",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/biblioGironde/kit-effets-speciaux.git"
+  },
+  "private": true,
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never",
+    "dist:mac": "electron-builder --mac --publish never",
+    "dist:win": "electron-builder --win --publish never",
+    "dist:linux": "electron-builder --linux --publish never"
+  },
+  "devDependencies": {
+    "electron": "33.2.1",
+    "electron-builder": "25.1.8"
+  },
+  "build": {
+    "appId": "fr.biblio-gironde.kit-effets-speciaux",
+    "productName": "Kit Effets Speciaux",
+    "copyright": "biblio.gironde",
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "electron/**",
+      "app/**",
+      "build/icon.png",
+      "package.json"
+    ],
+    "artifactName": "kit-effets-speciaux-${version}-${os}-${arch}.${ext}",
+    "mac": {
+      "category": "public.app-category.education",
+      "target": [
+        {
+          "target": "dmg",
+          "arch": [
+            "arm64",
+            "x64"
+          ]
+        }
+      ],
+      "identity": null,
+      "hardenedRuntime": false,
+      "extendInfo": {
+        "NSCameraUsageDescription": "La caméra filme les participants devant le fond vert.",
+        "NSMicrophoneUsageDescription": "Le micro enregistre le son des vidéos."
+      }
+    },
+    "dmg": {
+      "title": "Kit Effets Speciaux ${version}"
+    },
+    "win": {
+      "target": [
+        {
+          "target": "nsis",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "portable",
+          "arch": [
+            "x64"
+          ]
+        }
+      ]
+    },
+    "nsis": {
+      "oneClick": false,
+      "perMachine": false,
+      "allowToChangeInstallationDirectory": true,
+      "shortcutName": "Kit Effets Spéciaux",
+      "artifactName": "kit-effets-speciaux-${version}-windows-installation.${ext}"
+    },
+    "portable": {
+      "artifactName": "kit-effets-speciaux-${version}-windows-portable.${ext}"
+    },
+    "linux": {
+      "category": "Education",
+      "target": [
+        {
+          "target": "AppImage",
+          "arch": [
+            "x64"
+          ]
+        },
+        {
+          "target": "tar.gz",
+          "arch": [
+            "x64"
+          ]
+        }
+      ],
+      "synopsis": "Incrustation sur fond vert pour les ateliers en bibliothèque"
+    },
+    "publish": [
+      {
+        "provider": "github",
+        "owner": "biblioGironde",
+        "repo": "kit-effets-speciaux"
+      }
+    ]
+  }
+}
