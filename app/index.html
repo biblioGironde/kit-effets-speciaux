@@ -274,6 +274,11 @@ a.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(
 .sendlist img,.sendlist video{display:block;width:100%;aspect-ratio:16/9;object-fit:cover;background:#000}
 .sendlist input{position:absolute;top:6px;left:6px;width:20px;height:20px;accent-color:var(--accent)}
 .sendlist span{position:absolute;bottom:4px;right:6px;font:12px var(--f-mono);color:#fff;background:rgba(0,0,0,.6);padding:1px 6px;border-radius:4px}
+.manual{display:flex;flex-direction:column;gap:10px;padding:12px;border:1px dashed var(--accent);border-radius:8px;background:var(--accent-soft)}
+.manual .gsteps li > .btn{display:inline-flex}
+#gHook{font:inherit;font-size:13px;padding:8px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink);width:100%;min-width:0;margin-top:8px}
+#gAutoCfg .row{margin-top:8px}
+#gAutoCfg .gstatus{margin-top:8px}
 .gnav{display:flex;align-items:center;gap:10px;justify-content:space-between;padding-bottom:8px}
 .gnav span{color:var(--muted);font-size:14px;font-family:var(--f-mono)}
 .gnav button{min-width:130px;justify-content:center}
@@ -491,7 +496,26 @@ a.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(
         <p class="note" id="gSendInfo"></p>
         <button type="button" class="primary big" id="gSend">Envoyer</button>
         <p class="gstatus" id="gSendStatus" data-state="idle" hidden></p>
-        <p class="note">L'envoi passe par la messagerie de l'ordinateur (Outlook, Mail…). L'adresse n'est pas enregistrée par l'appli.</p>
+        <div class="manual" id="gManual" hidden>
+          <p class="flabel">Envoi par la messagerie de l'ordinateur, en 2 gestes</p>
+          <ol class="gsteps">
+            <li><button type="button" id="gSave">Enregistrer les fichiers</button>
+              <span class="note">Ils vont dans le dossier Téléchargements : <b id="gFileNames"></b></span></li>
+            <li><a class="btn" id="gMailto" href="#">Ouvrir le message</a>
+              <span class="note">Le message s'ouvre avec l'adresse et le texte. Cliquez sur « Joindre un fichier » et choisissez les fichiers enregistrés, puis envoyez.</span></li>
+          </ol>
+          <button type="button" id="gCopyMail">Copier l'adresse</button>
+          <span class="note">Si rien ne s'ouvre, aucune messagerie n'est configurée sur cet ordinateur : copiez l'adresse et envoyez les fichiers depuis votre webmail.</span>
+        </div>
+        <p class="note" id="gSendMode"></p>
+        <details class="trouble" id="gAutoCfg">
+          <summary>Envoi automatique (Power Automate)</summary>
+          <p class="note">Avec un flux Power Automate de votre Microsoft 365, les fichiers partent directement, sans ouvrir de messagerie. Collez l'adresse du flux, puis enregistrez. Elle reste sur cet ordinateur.</p>
+          <input type="url" id="gHook" placeholder="https://…" autocomplete="off" aria-label="Adresse du flux Power Automate">
+          <div class="row"><button type="button" id="gHookSave">Enregistrer</button><button type="button" id="gHookOff">Désactiver</button></div>
+          <p class="gstatus" id="gHookStatus" data-state="idle" hidden></p>
+        </details>
+        <p class="note">L'adresse email n'est pas enregistrée par l'appli.</p>
         <button type="button" id="gClear">Effacer toutes les prises</button>
       </section>
     </div>
@@ -653,6 +677,7 @@ a.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(
 
 <script src="vendor/peerjs.min.js"></script>
 <script src="vendor/qrcode.js"></script>
+<script src="config.js"></script>
 <script>
 (() => {
 const $ = s => document.querySelector(s);
@@ -1431,24 +1456,68 @@ function renderSend(){
 function sendInfo(){ const sel=SHOTS.filter(r=>r.send), mb=sel.reduce((a,r)=>a+r.blob.size,0)/1048576;
   $('#gSendInfo').textContent = sel.length ? `${sel.length} fichier${sel.length>1?'s':''} sélectionné${sel.length>1?'s':''} · ${mb.toFixed(1)} Mo${mb>20?' : attention, au-delà de 20 Mo certaines messageries refusent le message.':''}` : '';
   $('#gSend').disabled=!sel.length; }
-function sendStatus(state,msg){ const el=$('#gSendStatus'); el.hidden=false; el.dataset.state=state; el.textContent=msg; }
+function sendStatus(state,msg){ const el=$('#gSendStatus'); el.hidden=!msg; el.dataset.state=state; el.textContent=msg||''; }
+// Envoi automatique : adresse d'un flux Power Automate (ou de tout service qui reçoit le même JSON)
+const HOOK_KEY='kit-mail-hook';
+function getHook(){ let h=''; try{ h=localStorage.getItem(HOOK_KEY)||''; }catch(e){} return h || (window.KIT_CONFIG&&window.KIT_CONFIG.mailWebhook) || ''; }
+function updateSendMode(){
+  const h=getHook();
+  $('#gSendMode').textContent = h ? "Envoi automatique activé : le message part directement depuis la boîte de la bibliothèque." : "Envoi par la messagerie de cet ordinateur. Pour un envoi automatique, voir « Envoi automatique » ci-dessous.";
+  $('#gHook').value=h;
+}
+function hookStatus(state,msg){ const el=$('#gHookStatus'); el.hidden=false; el.dataset.state=state; el.textContent=msg; }
+$('#gHookSave').onclick=()=>{ const v=$('#gHook').value.trim();
+  if(!/^https:\/\/\S+$/.test(v)){ hookStatus('err',"L'adresse du flux doit commencer par https://."); return; }
+  try{ localStorage.setItem(HOOK_KEY,v); hookStatus('ok','Envoi automatique activé sur cet ordinateur.'); }catch(e){ hookStatus('err',"Impossible d'enregistrer l'adresse dans ce navigateur."); }
+  updateSendMode(); };
+$('#gHookOff').onclick=()=>{ try{ localStorage.removeItem(HOOK_KEY); }catch(e){} hookStatus('ok','Envoi automatique désactivé sur cet ordinateur.'); updateSendMode(); };
+const EMAIL_RE=/^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$/;
+const toBase64=blob=>new Promise((res,rej)=>{ const fr=new FileReader(); fr.onload=()=>res(String(fr.result).split(',')[1]); fr.onerror=rej; fr.readAsDataURL(blob); });
+const mimeOf=r=>r.blob.type || (r.kind==='photo'?'image/png':'video/'+r.ext);
+let manualSel=[];
+function showManual(to,sel){
+  manualSel=sel; $('#gManual').hidden=false;
+  $('#gFileNames').textContent=sel.map(r=>r.name).join(', ');
+  // l'adresse n'est pas encodée : certaines versions d'Outlook ne décodent pas %40
+  $('#gMailto').href=`mailto:${to}?subject=${encodeURIComponent(MAIL_SUBJECT)}&body=${encodeURIComponent(MAIL_BODY)}`;
+}
+$('#gSave').onclick=async()=>{ for(const r of manualSel) await saveBlob(r.blob, r.name); };
+$('#gCopyMail').onclick=async()=>{ const t=$('#gEmail').value.trim(); try{ await navigator.clipboard.writeText(t); toast('Adresse copiée'); }catch(e){ $('#gEmail').select(); toast('Adresse sélectionnée : copiez-la'); } };
+$('#gEmail').addEventListener('input',()=>{ $('#gManual').hidden=true; sendStatus('idle',''); });
 $('#gSend').onclick=async()=>{
   const to=$('#gEmail').value.trim(), sel=SHOTS.filter(r=>r.send);
-  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(to)){ sendStatus('err',"Saisissez une adresse email valide, par exemple prenom.nom@exemple.fr."); $('#gEmail').focus(); return; }
+  if(!EMAIL_RE.test(to)){ sendStatus('err',"Saisissez une adresse email valide, par exemple prenom.nom@exemple.fr."); $('#gEmail').focus(); return; }
   if(!sel.length){ sendStatus('err',"Cochez au moins une prise à envoyer."); return; }
-  const files=sel.map(r=>new File([r.blob], r.name, {type:r.blob.type || (r.kind==='photo'?'image/png':'video/'+r.ext)}));
-  let canShare=false; try{ canShare=!!navigator.canShare?.({files}); }catch(e){}
+  $('#gManual').hidden=true;
+  const hook=getHook();
+  if(hook){
+    const mb=sel.reduce((a,r)=>a+r.blob.size,0)/1048576;
+    if(mb>20){ sendStatus('err',`Les prises cochées pèsent ${mb.toFixed(1)} Mo : c'est trop pour un email. Décochez une vidéo, puis réessayez.`); return; }
+    const btn=$('#gSend'); btn.disabled=true; btn.textContent='Envoi en cours…'; sendStatus('idle','Envoi en cours…');
+    try{
+      const files=await Promise.all(sel.map(async r=>({name:r.name, contentType:mimeOf(r), contentBytes:await toBase64(r.blob)})));
+      const res=await fetch(hook,{method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify({to, subject:MAIL_SUBJECT, body:MAIL_BODY, files})});
+      if(!res.ok) throw new Error('HTTP '+res.status);
+      sendStatus('ok',`Message envoyé à ${to}.`); toast('Message envoyé');
+    }catch(e){
+      sendStatus('err',`L'envoi automatique n'a pas abouti (${e.message||'réseau'}). Vérifiez la connexion Internet, ou envoyez avec la messagerie de l'ordinateur ci-dessous.`);
+      showManual(to,sel);
+    }finally{ btn.disabled=false; btn.textContent='Envoyer'; }
+    return;
+  }
+  // Tablette ou smartphone : le partage du système propose les applis de messagerie avec les fichiers joints
+  const files=sel.map(r=>new File([r.blob], r.name, {type:mimeOf(r)}));
+  let canShare=false; try{ canShare=matchMedia('(pointer:coarse)').matches && !!navigator.canShare?.({files}); }catch(e){}
   if(canShare){
     try{ await navigator.clipboard?.writeText(to).catch(()=>{}); }catch(e){}
     try{ await navigator.share({files, title:MAIL_SUBJECT, text:MAIL_BODY});
-      sendStatus('ok',`Dans la fenêtre de partage, choisissez la messagerie (Outlook, Mail…). Collez l'adresse ${to} dans « À » : elle est déjà copiée.`); return; }
+      sendStatus('ok',`Choisissez la messagerie, puis collez l'adresse ${to} dans « À » : elle est déjà copiée.`); return; }
     catch(e){ if(e?.name==='AbortError'){ sendStatus('warn',"Envoi annulé."); return; } }
   }
-  for(const r of sel) await saveBlob(r.blob, r.name);
-  const href=`mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(MAIL_SUBJECT)}&body=${encodeURIComponent(MAIL_BODY)}`;
-  const a=document.createElement('a'); a.href=href; a.rel='noopener'; document.body.appendChild(a); a.click(); a.remove();
-  sendStatus('warn',`Un message à ${to} s'ouvre dans la messagerie de l'ordinateur. Joignez-y ${sel.length>1?'les fichiers enregistrés':'le fichier enregistré'} (dossier Téléchargements) : ${sel.map(r=>r.name).join(', ')}. Si rien ne s'ouvre, aucune messagerie n'est configurée sur cet ordinateur.`);
+  sendStatus('','');
+  showManual(to,sel);
 };
+updateSendMode();
 let clearArmed=0;
 $('#gClear').onclick=e=>{
   if(!SHOTS.length){ toast('Aucune prise à effacer'); return; }

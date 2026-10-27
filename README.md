@@ -31,6 +31,12 @@ L'écran d'accueil donne aussi accès à l'**autorisation d'utilisation de l'ima
 
 Un smartphone ou une tablette peut aussi servir de caméra : l'ordinateur affiche un QR code à flasher. Il faut pour cela une connexion Internet, et l'appli doit être ouverte depuis sa version en ligne (adresse en https).
 
+## Envoi des photos et vidéos par email
+
+Par défaut, l'onglet « Envoi » passe par la messagerie de l'ordinateur : l'animateur enregistre les fichiers, ouvre le message, puis y joint les fichiers. Sur tablette ou smartphone, le partage du système propose directement les applis de messagerie.
+
+Pour un envoi en un clic, sans messagerie sur le poste, branchez un flux Power Automate : voir [docs/envoi-automatique.md](docs/envoi-automatique.md).
+
 ## Installer l'application
 
 L'application n'est pas signée numériquement.

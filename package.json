@@ -1,7 +1,7 @@
 {
   "name": "kit-effets-speciaux",
   "productName": "Kit Effets Speciaux",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Kit Effets Spéciaux - Atelier Fond Vert : incrustation sur fond vert en direct pour les ateliers en bibliothèque.",
   "main": "electron/main.js",
   "author": "biblio.gironde",
