@@ -14,7 +14,7 @@
   "scripts": {
     "start": "electron .",
     "dist": "electron-builder --publish never",
-    "dist:mac": "electron-builder --mac --publish never",
+    "dist:mac": "electron-builder --mac --arm64 --publish never && electron-builder --mac --x64 --publish never",
     "dist:win": "electron-builder --win --publish never",
     "dist:linux": "electron-builder --linux --publish never"
   },
@@ -40,13 +40,7 @@
     "mac": {
       "category": "public.app-category.education",
       "target": [
-        {
-          "target": "dmg",
-          "arch": [
-            "arm64",
-            "x64"
-          ]
-        }
+        "dmg"
       ],
       "identity": null,
       "hardenedRuntime": false,
