@@ -246,6 +246,8 @@ a.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(
 .gpanel{display:flex;flex-direction:column;gap:12px}
 .gpanel > button,.gpanel > .btn{align-self:flex-start}
 .gpanel > button.big{align-self:stretch;justify-content:center}
+.check.mirror{align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:8px}
+.check.mirror input{margin-top:2px;flex:none}
 .gstatus{margin:0;padding:10px 12px;border-radius:8px;font-size:14px;background:var(--bg);color:var(--ink)}
 .gstatus[data-state="ok"]{background:var(--accent-soft)}
 .gstatus[data-state="ok"]::before{content:"✓ ";color:var(--accent);font-weight:700}
@@ -422,6 +424,7 @@ a.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(
         <button type="button" class="primary big" id="gCamOn">Activer la caméra</button>
         <div id="gCam"></div>
         <p class="gstatus" id="gCamStatus" data-state="idle">Aucune caméra active pour l'instant.</p>
+        <label class="check mirror"><input type="checkbox" id="gMirror"> <span><b>Effet miroir</b> : les participants se voient comme dans un miroir. Seule la personne est retournée, le décor reste à l'endroit.</span></label>
         <details class="trouble" id="gTrouble">
           <summary>Pas de caméra, ou pas d'image ? Les solutions</summary>
           <dl>
@@ -1002,7 +1005,7 @@ async function startCam(deviceId){
   const label=s.getVideoTracks()[0]?.label||'caméra';
   camStatus('ok',`Caméra active : ${label}`);
   checkFlux(s);
-  if(!S.mirrorTouched){ S.mirror=true; $('#mirror').checked=true; }
+  if(!S.mirrorTouched){ S.mirror=true; syncMirror(true); }
   $('#btnCam').textContent='Caméra active';
   try{ const devs=(await navigator.mediaDevices.enumerateDevices()).filter(d=>d.kind==='videoinput'); const sel=$('#camSel');
     if(devs.length>1){ const cur=s.getVideoTracks()[0]?.getSettings().deviceId; sel.innerHTML=''; devs.forEach((d,i)=>{ const o=document.createElement('option'); o.value=d.deviceId; o.textContent=d.label||('Caméra '+(i+1)); if(d.deviceId===cur) o.selected=true; sel.appendChild(o); }); sel.hidden=false; } }catch(e){}
@@ -1033,8 +1036,10 @@ function checkFlux(stream){
 }
 $('#btnCam').onclick=()=>startCam();
 $('#camSel').onchange=e=>startCam(e.target.value);
-$('#btnDemo').onclick=()=>{ stopCam(); $('#btnCam').textContent='Activer la caméra'; $('#camSel').hidden=true; setSource('canvas',demo,'Démo','demo'); if(!S.mirrorTouched){ S.mirror=false; $('#mirror').checked=false; } };
-$('#mirror').onchange=e=>{ S.mirror=e.target.checked; S.mirrorTouched=true; };
+$('#btnDemo').onclick=()=>{ stopCam(); $('#btnCam').textContent='Activer la caméra'; $('#camSel').hidden=true; setSource('canvas',demo,'Démo','demo'); if(!S.mirrorTouched){ S.mirror=false; syncMirror(false); } };
+function syncMirror(v){ $('#mirror').checked=v; const g=$('#gMirror'); if(g) g.checked=v; }
+$('#mirror').onchange=e=>{ S.mirror=e.target.checked; S.mirrorTouched=true; syncMirror(S.mirror); };
+$('#gMirror').onchange=e=>{ S.mirror=e.target.checked; S.mirrorTouched=true; syncMirror(S.mirror); };
 
 function loadFile(file, cb){
   const url=URL.createObjectURL(file);
@@ -1042,7 +1047,7 @@ function loadFile(file, cb){
   else { const i=new Image(); i.onload=()=>cb('image',i); i.src=url; }
 }
 $('#fileFg').onchange=e=>{ const f=e.target.files[0]; if(!f) return; stopCam(); $('#btnCam').textContent='Activer la caméra'; $('#camSel').hidden=true;
-  loadFile(f,(kind,el)=>{ setSource(kind,el, kind==='video'?'Vidéo importée':'Photo importée','file'); if(!S.mirrorTouched){ S.mirror=false; $('#mirror').checked=false; } }); e.target.value=''; };
+  loadFile(f,(kind,el)=>{ setSource(kind,el, kind==='video'?'Vidéo importée':'Photo importée','file'); if(!S.mirrorTouched){ S.mirror=false; syncMirror(false); } }); e.target.value=''; };
 
 // ---------- bibliothèques de décors + storyboard ----------
 const bgsEl=$('#bgs'), libSel=$('#libSel'), plansEl=$('#plans');
@@ -1282,7 +1287,7 @@ function startPeer(){
   peer.on('call',call=>{ call.answer();
     call.on('stream',s=>{ if(remoteStream===s) return; stopCam(); $('#btnCam').textContent='Activer la caméra'; $('#camSel').hidden=true;
       remoteStream=s; vidFg.loop=false; vidFg.srcObject=s; vidFg.play().catch(()=>{}); setSource('video',vidFg,'Smartphone','phone');
-      if(!S.mirrorTouched){ S.mirror=false; $('#mirror').checked=false; }
+      if(!S.mirrorTouched){ S.mirror=false; syncMirror(false); }
       st.textContent='Smartphone connecté ✔'; toast('Smartphone connecté'); });
     call.on('close',()=>{ remoteStream=null; st.textContent='Smartphone déconnecté. Flashez à nouveau le QR code.'; toast('Smartphone déconnecté'); }); });
   peer.on('disconnected',()=>{ try{ peer.reconnect(); }catch(e){} });
