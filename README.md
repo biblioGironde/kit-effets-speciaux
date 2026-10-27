@@ -59,14 +59,8 @@ Pour régénérer les PDF après une modification de `sources/`, imprimez le fic
 
 ## Publier une nouvelle version
 
-1. Changez le numéro de `version` dans `package.json`.
-2. Créez un tag et poussez-le :
+Changez le numéro de `version` dans `package.json` (par exemple `1.1.0`) et poussez sur `main`.
 
-   ```bash
-   git tag v1.1.0
-   git push origin v1.1.0
-   ```
-
-Le workflow « Release de l'application » construit l'application sur macOS, Windows et Linux, puis crée la release avec les fichiers à télécharger.
+Le workflow « Release de l'application » voit la nouvelle version, construit l'application sur macOS, Windows et Linux, puis crée le tag `v1.1.0` et la release avec les fichiers à télécharger. Tant que le numéro de version ne change pas, aucune release n'est créée.
 
 La version en ligne se met à jour toute seule à chaque modification du dossier `app/` sur la branche `main`. Au tout premier déploiement, activez GitHub Pages dans **Settings > Pages**, avec la source « GitHub Actions ».
