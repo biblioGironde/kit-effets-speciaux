@@ -78,3 +78,10 @@ Changez le numéro de `version` dans `package.json` (par exemple `1.1.0`) et pou
 Le workflow « Release de l'application » voit la nouvelle version, construit l'application sur macOS, Windows et Linux, puis crée le tag `v1.1.0` et la release avec les fichiers à télécharger. Tant que le numéro de version ne change pas, aucune release n'est créée.
 
 La version en ligne se met à jour toute seule à chaque modification du dossier `app/` sur la branche `main`. Au tout premier déploiement, activez GitHub Pages dans **Settings > Pages**, avec la source « GitHub Actions ».
+
+## Licences
+
+- **Code** : © Département de la Gironde — biblio.gironde, sous licence [GNU Affero General Public License v3.0](LICENSE) ou ultérieure (AGPL-3.0-or-later). Vous pouvez le réutiliser et le modifier ; toute version modifiée, redistribuée ou mise en ligne, doit être publiée sous la même licence, avec son code source.
+- **Fiches PDF et documentation** : [Licence Ouverte Etalab 2.0](https://www.etalab.gouv.fr/licence-ouverte-open-licence/), réutilisation libre, y compris commerciale, avec mention de la source « biblio.gironde ».
+- Polices Bricolage Grotesque et Atkinson Hyperlegible : SIL Open Font License 1.1.
+- Bibliothèques intégrées (`app/vendor/`) : PeerJS (MIT), qrcode-generator (MIT).
